@@ -1,0 +1,21 @@
+server:
+  port: 8081
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/platform
+    username: platform
+    password: platform
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: http://auth-service:8081
+management:
+  tracing:
+    sampling:
+      probability: 1.0
