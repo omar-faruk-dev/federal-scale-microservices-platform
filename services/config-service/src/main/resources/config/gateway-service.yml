@@ -1,0 +1,36 @@
+server:
+  port: 8080
+spring:
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
+      routes:
+        - id: resource-service
+          uri: http://resource-service:8082
+          predicates:
+            - Path=/api/resources/**
+        - id: auth-service
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/auth/**
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://auth-service:8081
+resilience4j:
+  circuitbreaker:
+    instances:
+      resourceService:
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+  ratelimiter:
+    instances:
+      resourceLimiter:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+management:
+  tracing:
+    sampling:
+      probability: 1.0

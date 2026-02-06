@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: gateway-service
+  config:
+    import: optional:configserver:http://config-service:8888
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://auth-service:8081
+  cloud:
+    gateway:
+      httpclient:
+        wiretap: true
+      routes:
+        - id: auth-service
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/auth/**
+        - id: resource-service
+          uri: http://resource-service:8082
+          predicates:
+            - Path=/api/resources/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 25
+                redis-rate-limiter.burstCapacity: 50
+                key-resolver: "#{@userKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: resourceService
+                fallbackUri: forward:/fallback/resource
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+logging:
+  pattern:
+    level: "%5p [traceId=%X{traceId:-},spanId=%X{spanId:-}]"
